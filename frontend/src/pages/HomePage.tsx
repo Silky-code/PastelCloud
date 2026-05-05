@@ -1,7 +1,18 @@
 import { useAuth0 } from "@auth0/auth0-react";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const HomePage = () => {
-  const { loginWithRedirect } = useAuth0();
+  const { loginWithRedirect, isAuthenticated, isLoading } = useAuth0();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/pos");
+    }
+  }, [isAuthenticated]);
+
+  if (isLoading) return null;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-[#F5ECD7]">
