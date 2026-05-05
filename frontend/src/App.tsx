@@ -7,6 +7,7 @@ import ProvidersPage from "./pages/ProvidersPage";
 import POSPage from "./pages/POSPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import UsersPage from "./pages/UsersPage";
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
             <Route path="/inventario" element={<InventoryPage />} />
             <Route path="/proveedores" element={<ProvidersPage />} />
             <Route path="/pos" element={<POSPage />} />
+             <Route path="/usuarios" element={<UsersPage />} />
           </Route>
         </Route>
       </Routes>
