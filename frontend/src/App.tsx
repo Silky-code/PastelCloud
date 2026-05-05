@@ -21,7 +21,7 @@ function App() {
             <Route path="/inventario" element={<InventoryPage />} />
             <Route path="/proveedores" element={<ProvidersPage />} />
             <Route path="/pos" element={<POSPage />} />
-             <Route path="/usuarios" element={<UsersPage />} />
+            <Route path="/usuarios" element={<UsersPage />} />
           </Route>
         </Route>
       </Routes>
