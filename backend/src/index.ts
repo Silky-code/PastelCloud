@@ -21,7 +21,7 @@ app.use(cors({
     "https://localhost:5173",
     "https://pastelcloud-frontend.onrender.com"
   ]
-}));
+}));//deploy
 
 app.use("/api/user", userRoutes);
 app.use("/api/product", productRoutes);
