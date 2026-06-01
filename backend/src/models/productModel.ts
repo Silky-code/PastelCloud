@@ -9,6 +9,7 @@ export interface IProduct extends Document {
   stock: number;
   minStock: number;
   active: boolean;
+  imageUrl?: string;
   providerId?: mongoose.Types.ObjectId;
 }
 
@@ -21,6 +22,7 @@ const productSchema = new Schema<IProduct>({
   stock:         { type: Number, required: true, default: 0 },
   minStock:      { type: Number, default: 5 },
   active:        { type: Boolean, default: true },
+  imageUrl:      { type: String },
   providerId:    { type: Schema.Types.ObjectId, ref: "Provider" },
 }, { timestamps: true });
 

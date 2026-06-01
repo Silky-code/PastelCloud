@@ -1,9 +1,27 @@
 import { Request, Response } from "express";
+import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/productModel";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const uploadImage = async (file: Express.Multer.File): Promise<string> => {
+  const base64 = Buffer.from(file.buffer).toString("base64");
+  const dataUri = `data:${file.mimetype};base64,${base64}`;
+  const result  = await cloudinary.uploader.upload(dataUri);
+  return result.url;
+};
 
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
   try {
-    const product = new Product(req.body);
+    let imageUrl: string | undefined;
+    if (req.file) {
+      imageUrl = await uploadImage(req.file);
+    }
+    const product = new Product({ ...req.body, imageUrl });
     await product.save();
     res.status(201).json(product);
   } catch (error) {
@@ -40,7 +58,12 @@ export const getProductByBarcode = async (req: Request, res: Response): Promise<
 export const updateProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const product = await Product.findByIdAndUpdate(id, req.body, { new: true });
+    let imageUrl: string | undefined;
+    if (req.file) {
+      imageUrl = await uploadImage(req.file);
+    }
+    const updateData = imageUrl ? { ...req.body, imageUrl } : req.body;
+    const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
     if (!product) {
       res.status(404).json({ message: "Producto no encontrado" });
       return;
@@ -55,11 +78,7 @@ export const updateProduct = async (req: Request, res: Response): Promise<void> 
 export const deleteProduct = async (req: Request, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
-    const product = await Product.findByIdAndUpdate(id, { active: false }, { new: true });
-    if (!product) {
-      res.status(404).json({ message: "Producto no encontrado" });
-      return;
-    }
+    await Product.findByIdAndUpdate(id, { active: false });
     res.json({ message: "Producto eliminado correctamente" });
   } catch (error) {
     console.error(error);
