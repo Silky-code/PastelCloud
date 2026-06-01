@@ -16,7 +16,12 @@ mongoose
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://localhost:5173",
+    "https://pastelcloud-frontend.onrender.com"
+  ]
+}));
 
 app.use("/api/user", userRoutes);
 app.use("/api/product", productRoutes);
