@@ -229,9 +229,18 @@ const POSPage = () => {
                       : "border-transparent hover:border-[#C8803C]"
                   }`}
                 >
-                  <div className="w-full h-16 bg-[#F5ECD7] rounded-lg mb-2 flex items-center justify-center text-2xl">
-                    🛒
-                  </div>
+                  <div className="w-full h-16 rounded-lg mb-2 overflow-hidden bg-[#F5ECD7]">
+  {product.imageUrl ? (
+    <img
+      src={product.imageUrl}
+      alt={product.name}
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <div className="w-full h-full flex items-center justify-center text-gray-300 text-2xl">
+    </div>
+  )}
+</div>
                   <p className="text-xs font-semibold text-[#6B2737] truncate">{product.name}</p>
                   <p className="text-xs text-gray-400">{product.category || "—"}</p>
                   <p className="text-sm font-bold text-[#C8803C] mt-1">${product.salePrice.toFixed(2)}</p>

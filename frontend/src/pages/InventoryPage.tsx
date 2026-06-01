@@ -1,23 +1,76 @@
-import { useGetProducts, useDeleteProduct } from "../api/ProductApi";
+import { useState } from "react";
+import { useGetProducts, useCreateProduct, useUpdateProduct, useDeleteProduct } from "../api/ProductApi";
+import ProductModal from "../components/ProductModal";
+import type { Product } from "../types";
 
 const InventoryPage = () => {
   const { data: products, isLoading } = useGetProducts();
+  const { mutate: createProduct, isPending: isCreating } = useCreateProduct();
+  const { mutate: updateProduct, isPending: isUpdating } = useUpdateProduct();
   const { mutate: deleteProduct } = useDeleteProduct();
 
+  const [showModal, setShowModal]       = useState(false);
+  const [editProduct, setEditProduct]   = useState<Product | undefined>(undefined);
+  const [search, setSearch]             = useState("");
+
+  const filtered = products?.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+ const handleSave = (data: any, imageFile?: File) => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    formData.append(key, String(value));
+  });
+  if (imageFile) formData.append("imageFile", imageFile);
+
+  if (editProduct) {
+    updateProduct({ id: editProduct._id, formData }, {
+      onSuccess: () => { setShowModal(false); setEditProduct(undefined); }
+    });
+  } else {
+    createProduct(formData, {
+      onSuccess: () => setShowModal(false)
+    });
+  }
+};
+
+  const handleEdit = (product: Product) => {
+    setEditProduct(product);
+    setShowModal(true);
+  };
+
+  const handleAdd = () => {
+    setEditProduct(undefined);
+    setShowModal(true);
+  };
+
   if (isLoading) return (
-    <div className="flex justify-center items-center h-screen">
-      <p className="text-[#6B2737]">Cargando inventario...</p>
+    <div className="flex justify-center items-center h-screen text-[#6B2737]">
+      Cargando inventario...
     </div>
   );
 
   return (
     <div className="p-6">
+      {showModal && (
+        <ProductModal
+          product={editProduct}
+          onClose={() => { setShowModal(false); setEditProduct(undefined); }}
+          onSave={handleSave}
+          isLoading={isCreating || isUpdating}
+        />
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold text-[#6B2737]">Inventario</h2>
-          <p className="text-gray-500 text-sm">Gestión de los productos</p>
+          <p className="text-gray-500 text-sm">Gestión de productos</p>
         </div>
-        <button className="bg-[#C8803C] text-white px-4 py-2 rounded-lg hover:bg-[#a6682e] transition-colors text-sm font-medium">
+        <button
+          onClick={handleAdd}
+          className="bg-[#C8803C] text-white px-4 py-2 rounded-lg hover:bg-[#a6682e] text-sm font-medium"
+        >
           + Agregar Producto
         </button>
       </div>
@@ -26,12 +79,11 @@ const InventoryPage = () => {
         <div className="flex justify-between items-center px-4 py-3 border-b">
           <input
             type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Buscar producto..."
             className="border border-gray-200 rounded-lg px-3 py-2 text-sm w-64 focus:outline-none focus:border-[#6B2737]"
           />
-          <button className="bg-[#6B2737] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#5a1f2d]">
-            Buscar
-          </button>
         </div>
         <table className="w-full text-sm">
           <thead className="bg-[#6B2737] text-white">
@@ -46,21 +98,18 @@ const InventoryPage = () => {
             </tr>
           </thead>
           <tbody>
-            {products?.length === 0 && (
+            {filtered?.length === 0 && (
               <tr>
                 <td colSpan={7} className="text-center py-8 text-gray-400">
                   No hay productos registrados
                 </td>
               </tr>
             )}
-            {products?.map((product, index) => (
-              <tr
-                key={product._id}
-                className={`border-b ${
-                  product.stock <= product.minStock ? "bg-red-50" : 
-                  index % 2 === 0 ? "bg-white" : "bg-[#fdf8f0]"
-                }`}
-              >
+            {filtered?.map((product, index) => (
+              <tr key={product._id} className={`border-b ${
+                product.stock <= product.minStock ? "bg-red-50" :
+                index % 2 === 0 ? "bg-white" : "bg-[#fdf8f0]"
+              }`}>
                 <td className="px-4 py-3 text-gray-500">{product.barcode || "—"}</td>
                 <td className="px-4 py-3 font-medium text-[#6B2737]">{product.name}</td>
                 <td className="px-4 py-3 text-gray-500">{product.category || "—"}</td>
@@ -75,7 +124,10 @@ const InventoryPage = () => {
                 </td>
                 <td className="px-4 py-3 text-right font-medium">${product.salePrice.toFixed(2)}</td>
                 <td className="px-4 py-3 text-center">
-                  <button className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600">
+                  <button
+                    onClick={() => handleEdit(product)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                  >
                     Editar
                   </button>
                 </td>

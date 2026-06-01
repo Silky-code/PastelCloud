@@ -24,15 +24,12 @@ export const useCreateProduct = () => {
   const { getAccessTokenSilently } = useAuth0();
   const queryClient = useQueryClient();
 
-  const createProductRequest = async (formData: Partial<Product>) => {
+  const createProductRequest = async (formData: FormData) => {
     const token = await getAccessTokenSilently();
     const res = await fetch(`${API_BASE_URL}/api/product`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
     if (!res.ok) throw new Error("Error al crear el producto");
     return res.json();
@@ -52,15 +49,12 @@ export const useUpdateProduct = () => {
   const { getAccessTokenSilently } = useAuth0();
   const queryClient = useQueryClient();
 
-  const updateProductRequest = async ({ id, ...formData }: Partial<Product> & { id: string }) => {
+  const updateProductRequest = async ({ id, formData }: { id: string; formData: FormData }) => {
     const token = await getAccessTokenSilently();
     const res = await fetch(`${API_BASE_URL}/api/product/${id}`, {
       method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData,
     });
     if (!res.ok) throw new Error("Error al actualizar el producto");
     return res.json();
@@ -75,7 +69,6 @@ export const useUpdateProduct = () => {
     onError: (err) => toast.error(err.toString()),
   });
 };
-
 export const useDeleteProduct = () => {
   const { getAccessTokenSilently } = useAuth0();
   const queryClient = useQueryClient();

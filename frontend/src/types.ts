@@ -17,6 +17,7 @@ export type Product = {
   stock: number;
   minStock: number;
   active: boolean;
+  imageUrl?: string;
   providerId?: string;
 };
 
