@@ -1,9 +1,7 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import mongoose from "mongoose";
-import https from "https";
-import fs from "fs";
 import userRoutes from "./routes/userRoutes";
 import productRoutes from "./routes/productRoutes";
 import providerRoutes from "./routes/providerRoutes";
@@ -21,17 +19,14 @@ app.use(cors({
     "https://localhost:5173",
     "https://pastelcloud-frontend.onrender.com"
   ]
-}));//deploy
+}));
 
 app.use("/api/user", userRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/provider", providerRoutes);
 app.use("/api/sale", saleRoutes);
 
-const key  = fs.readFileSync("cacaoyvainilla-privateKey.key");
-const cert = fs.readFileSync("cacaoyvainilla-certificate.crt");
-
 const PORT = process.env.PORT || 3000;
-https.createServer({ key, cert }, app).listen(PORT, () => {
-  console.log(`Servidor HTTPS corriendo en el puerto ${PORT}`);
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
