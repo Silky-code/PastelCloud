@@ -264,7 +264,7 @@ const POSPage = () => {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300 text-2xl">
-                        📦
+                        
                       </div>
                     )}
                   </div>

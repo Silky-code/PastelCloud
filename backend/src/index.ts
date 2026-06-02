@@ -6,6 +6,7 @@ import userRoutes from "./routes/userRoutes";
 import productRoutes from "./routes/productRoutes";
 import providerRoutes from "./routes/providerRoutes";
 import saleRoutes from "./routes/saleRoutes";
+import businessRoutes from "./routes/businessRoutes";
 
 mongoose
   .connect(process.env.MONGODB_CONNECTION_STRING as string)
@@ -25,6 +26,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/product", productRoutes);
 app.use("/api/provider", providerRoutes);
 app.use("/api/sale", saleRoutes);
+app.use("/api/business", businessRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

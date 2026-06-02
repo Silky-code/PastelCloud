@@ -9,6 +9,7 @@ const Layout = () => {
     { path: "/inventario", label: "Inventario" },
     { path: "/proveedores", label: "Proveedores" },
     { path: "/usuarios", label: "Usuarios" },
+    { path: "/negocio", label: "Mi Negocio" },
   ];
 
   return (

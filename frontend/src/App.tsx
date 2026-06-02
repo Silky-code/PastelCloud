@@ -8,6 +8,7 @@ import POSPage from "./pages/POSPage";
 import AuthCallbackPage from "./pages/AuthCallbackPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import UsersPage from "./pages/UsersPage";
+import BusinessPage from "./pages/BusinessPage";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/proveedores" element={<ProvidersPage />} />
             <Route path="/pos" element={<POSPage />} />
             <Route path="/usuarios" element={<UsersPage />} />
+            <Route path="/negocio" element={<BusinessPage />} />
           </Route>
         </Route>
       </Routes>
