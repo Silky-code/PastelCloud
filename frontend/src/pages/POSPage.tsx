@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useGetProducts } from "../api/ProductApi";
+import { useCreateSale } from "../api/SaleApi";
 import type { Product } from "../types";
+import { toast } from "sonner";
 
 type CartItem = {
   product: Product;
@@ -10,13 +12,17 @@ type CartItem = {
 
 const POSPage = () => {
   const { data: products, isLoading } = useGetProducts();
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [search, setSearch] = useState("");
+  const { mutate: createSale, isPending } = useCreateSale();
+
+  const [cart, setCart]                   = useState<CartItem[]>([]);
+  const [search, setSearch]               = useState("");
   const [paymentMethod, setPaymentMethod] = useState<"efectivo" | "tarjeta" | "otro">("efectivo");
-  const [cashReceived, setCashReceived] = useState<number>(0);
+  const [cashReceived, setCashReceived]   = useState<number>(0);
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
 
-  const categories = ["Todos", ...Array.from(new Set(products?.map(p => p.category).filter(Boolean) as string[]))];
+  const categories = ["Todos", ...Array.from(new Set(
+    products?.map(p => p.category).filter(Boolean) as string[]
+  ))];
 
   const filteredProducts = products?.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -26,9 +32,13 @@ const POSPage = () => {
   });
 
   const addToCart = (product: Product) => {
+    if (product.stock <= 0) {
+      return;
+    }
     setCart(prev => {
       const existing = prev.find(item => item.product._id === product._id);
       if (existing) {
+        if (existing.quantity >= product.stock) return prev;
         return prev.map(item =>
           item.product._id === product._id
             ? { ...item, quantity: item.quantity + 1, subtotal: (item.quantity + 1) * item.product.salePrice }
@@ -56,10 +66,27 @@ const POSPage = () => {
   const change = cashReceived - total;
 
   const handleConfirm = () => {
-    if (cart.length === 0) return alert("Agrega productos al carrito");
-    alert(`Venta confirmada\nTotal: $${total.toFixed(2)}\nMétodo: ${paymentMethod}`);
-    setCart([]);
-    setCashReceived(0);
+    if (cart.length === 0) {
+      toast.error("Agrega productos al carrito");
+      return;
+    }
+    if (paymentMethod === "efectivo" && cashReceived < total) {
+      toast.error("El pago recibido es menor al total");
+      return;
+    }
+
+    createSale({
+      details: cart.map(item => ({
+        productId: item.product._id,
+        quantity: item.quantity,
+      })),
+      paymentMethod,
+    }, {
+      onSuccess: () => {
+        setCart([]);
+        setCashReceived(0);
+      }
+    });
   };
 
   return (
@@ -76,7 +103,6 @@ const POSPage = () => {
           </button>
         </div>
 
- 
         <div className="flex-1 overflow-y-auto">
           {cart.length === 0 ? (
             <div className="flex items-center justify-center h-32 text-gray-400 text-sm">
@@ -111,7 +137,6 @@ const POSPage = () => {
           )}
         </div>
 
-
         <div className="border-t p-3 bg-[#fdf8f0]">
           <div className="flex justify-between text-sm mb-1">
             <span className="text-gray-500">Subtotal:</span>
@@ -138,7 +163,7 @@ const POSPage = () => {
 
           {paymentMethod === "efectivo" && (
             <>
-              <div className="flex gap-2 mb-1">
+              <div className="flex gap-2 mb-1 items-center">
                 <span className="text-sm text-gray-500 w-24">Pago recibido:</span>
                 <input
                   type="number"
@@ -160,13 +185,14 @@ const POSPage = () => {
           <div className="flex gap-2">
             <button
               onClick={handleConfirm}
-              className="flex-1 bg-[#C8803C] text-white py-2 rounded-lg text-sm font-semibold hover:bg-[#a6682e] transition-colors"
+              disabled={isPending}
+              className="flex-1 bg-[#C8803C] text-white py-2 rounded-lg text-sm font-semibold hover:bg-[#a6682e] disabled:opacity-50"
             >
-              Confirmar
+              {isPending ? "Guardando..." : "Confirmar"}
             </button>
             <button
               onClick={() => setCart([])}
-              className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors"
+              className="flex-1 bg-red-500 text-white py-2 rounded-lg text-sm font-semibold hover:bg-red-600"
             >
               Cancelar
             </button>
@@ -176,7 +202,6 @@ const POSPage = () => {
 
       {/* Panel derecho - Productos */}
       <div className="flex-1 flex flex-col bg-[#F5ECD7]">
-        {/* Barra de búsqueda */}
         <div className="bg-white border-b px-4 py-3 flex gap-2">
           <input
             type="text"
@@ -190,7 +215,6 @@ const POSPage = () => {
           </button>
         </div>
 
-        {/* Categorías */}
         <div className="bg-white border-b px-4 py-2 flex gap-2 overflow-x-auto">
           {categories.map(cat => (
             <button
@@ -207,11 +231,10 @@ const POSPage = () => {
           ))}
         </div>
 
-        {/* Grid de productos */}
         <div className="flex-1 overflow-y-auto p-4">
           {isLoading ? (
             <div className="flex justify-center items-center h-32 text-[#6B2737]">
-              Cargando los productos
+              Cargando productos...
             </div>
           ) : filteredProducts?.length === 0 ? (
             <div className="flex justify-center items-center h-32 text-gray-400">
@@ -223,29 +246,36 @@ const POSPage = () => {
                 <button
                   key={product._id}
                   onClick={() => addToCart(product)}
+                  disabled={product.stock <= 0}
                   className={`bg-white rounded-xl p-3 text-left shadow-sm hover:shadow-md transition-shadow border-2 ${
-                    product.stock <= product.minStock
+                    product.stock <= 0
+                      ? "opacity-50 cursor-not-allowed border-gray-200"
+                      : product.stock <= product.minStock
                       ? "border-red-300"
                       : "border-transparent hover:border-[#C8803C]"
                   }`}
                 >
                   <div className="w-full h-16 rounded-lg mb-2 overflow-hidden bg-[#F5ECD7]">
-  {product.imageUrl ? (
-    <img
-      src={product.imageUrl}
-      alt={product.name}
-      className="w-full h-full object-cover"
-    />
-  ) : (
-    <div className="w-full h-full flex items-center justify-center text-gray-300 text-2xl">
-    </div>
-  )}
-</div>
+                    {product.imageUrl ? (
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-2xl">
+                        📦
+                      </div>
+                    )}
+                  </div>
                   <p className="text-xs font-semibold text-[#6B2737] truncate">{product.name}</p>
                   <p className="text-xs text-gray-400">{product.category || "—"}</p>
                   <p className="text-sm font-bold text-[#C8803C] mt-1">${product.salePrice.toFixed(2)}</p>
-                  {product.stock <= product.minStock && (
-                    <p className="text-xs text-red-500">Alerta: Stock bajo</p>
+                  {product.stock <= product.minStock && product.stock > 0 && (
+                    <p className="text-xs text-red-500">Stock bajo</p>
+                  )}
+                  {product.stock <= 0 && (
+                    <p className="text-xs text-red-500">Sin stock</p>
                   )}
                 </button>
               ))}
